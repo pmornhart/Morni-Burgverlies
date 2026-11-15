@@ -106,6 +106,12 @@ public final class BurgverliesPlugin extends JavaPlugin {
             }
         }
 
+        // Das Torhaus bleibt immer geladen – sonst verschwänden die Tafeln, wenn niemand da ist.
+        for (int cx = -2; cx <= 1; cx++) {
+            for (int cz = -2; cz <= 1; cz++) {
+                world.setChunkForceLoaded(cx, cz, true);
+            }
+        }
         buildHall(false);
         boards.spawn();
 

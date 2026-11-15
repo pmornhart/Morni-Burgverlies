@@ -337,8 +337,8 @@ public final class Texts {
         t("trail.locked", "<dark_gray>Noch gesperrt</dark_gray>", "<dark_gray>Still locked</dark_gray>");
 
         // ---------- Verwaltung ----------
-        t("admin.usage", "<gray>/bvadmin info · neubauen · neuladen · debug [spieler] · loesen [spieler] · taler [spieler] [anzahl]</gray>",
-                "<gray>/bvadmin info · neubauen (rebuild) · neuladen (reload) · debug [player] · loesen (solve) [player] · taler [player] [amount]</gray>");
+        t("admin.usage", "<gray>/bvadmin info · neubauen · neuladen · debug [spieler] · loesen [spieler] · taler [spieler] [anzahl] · start [spieler] [schwierigkeit]</gray>",
+                "<gray>/bvadmin info · neubauen (rebuild) · neuladen (reload) · debug [player] · loesen (solve) [player] · taler [player] [amount] · start [player] [difficulty]</gray>");
         t("admin.info", "<gray>Abstiege: <white><runs></white>/<white><max></white> · im Verlies: <white><inside></white> · suchen: <white><queued></white> · Netzwerk: <white><net></white></gray>",
                 "<gray>Runs: <white><runs></white>/<white><max></white> · in the dungeon: <white><inside></white> · searching: <white><queued></white> · network: <white><net></white></gray>");
         t("admin.rebuilt", "<em>Torhaus neu gebaut.</em>", "<em>Gatehouse rebuilt.</em>");
@@ -347,6 +347,7 @@ public final class Texts {
         t("admin.no-run", "<gray>Diese Person ist in keinem Abstieg.</gray>", "<gray>That player isn't in a run.</gray>");
         t("admin.solved", "<em>Raum geschafft.</em>", "<em>Room cleared.</em>");
         t("admin.not-solved", "<gray>Gerade läuft kein Raum, der sich lösen lässt.</gray>", "<gray>No room that can be solved right now.</gray>");
+        t("admin.started", "<gray><white><name></white> (und die Party) gehen hinab.</gray>", "<gray><white><name></white> (and their party) go down.</gray>");
         t("admin.taler", "<au>+<n> Kerkertaler.</au>", "<au>+<n> dungeon coins.</au>");
     }
 

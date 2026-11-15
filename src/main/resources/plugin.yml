@@ -18,8 +18,8 @@ commands:
     usage: /verlassen
     aliases: [leave, aufgeben]
   bvadmin:
-    description: Verwaltung (info, neubauen, neuladen, debug, loesen, taler)
-    usage: /bvadmin <info|neubauen|neuladen|debug|loesen|taler> [spieler] [anzahl]
+    description: Verwaltung (info, neubauen, neuladen, debug, loesen, taler, start)
+    usage: /bvadmin <info|neubauen|neuladen|debug|loesen|taler|start> [spieler] [anzahl|schwierigkeit]
     permission: moinmorni.burgverlies.admin
 
 permissions:

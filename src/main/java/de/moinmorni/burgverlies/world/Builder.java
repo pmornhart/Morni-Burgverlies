@@ -73,8 +73,33 @@ public final class Builder {
     /** Sofort setzen (kleine Mengen, z. B. Fallgitter). */
     public static void now(World world, List<Put> puts) {
         for (Put p : puts) {
-            world.getBlockAt(p.x(), p.y(), p.z()).setBlockData(p.data(), false);
+            set(world.getBlockAt(p.x(), p.y(), p.z()), p.data());
         }
+    }
+
+    /**
+     * Einen Block setzen. Steht dort noch ein Block mit eigenem Inhalt aus einem früheren Abstieg (z. B. ein Lesepult),
+     * kann Minecraft beim Ersetzen ohne Physik stolpern – dann erst mit Physik leeren und noch einmal setzen.
+     */
+    static void set(Block b, BlockData data) {
+        try {
+            b.setBlockData(data, false);
+        } catch (RuntimeException e) {
+            try {
+                b.setType(org.bukkit.Material.AIR, true);
+                b.setBlockData(data, false);
+            } catch (RuntimeException again) {
+                // Einzelner Block bleibt, wie er ist – der Rest wird trotzdem gebaut.
+                failed++;
+            }
+        }
+    }
+
+    private static int failed;
+
+    /** Blöcke, die sich nicht setzen ließen (für /bvadmin info). */
+    public static int failed() {
+        return failed;
     }
 
     private void tick() {
@@ -107,7 +132,7 @@ public final class Builder {
         int n = 0;
         while (job.index < job.puts.size()) {
             Put p = job.puts.get(job.index++);
-            job.world.getBlockAt(p.x(), p.y(), p.z()).setBlockData(p.data(), false);
+            set(job.world.getBlockAt(p.x(), p.y(), p.z()), p.data());
             placed++;
             if (++n % CHECK_EVERY == 0 && System.nanoTime() > deadline) {
                 return false;

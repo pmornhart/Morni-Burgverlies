@@ -21,7 +21,7 @@ import org.bukkit.entity.Player;
 final class Commands implements TabExecutor {
 
     private static final List<String> SUBS = List.of("start", "suchen", "verlassen", "stats", "top", "spuren");
-    private static final List<String> ADMIN = List.of("info", "neubauen", "neuladen", "debug", "loesen", "taler");
+    private static final List<String> ADMIN = List.of("info", "neubauen", "neuladen", "debug", "loesen", "taler", "start");
 
     private final BurgverliesPlugin plugin;
 
@@ -159,6 +159,17 @@ final class Commands implements TabExecutor {
             case "neuladen" -> {
                 plugin.reloadSettings();
                 sender.sendMessage(Texts.msg(lang, "admin.reloaded"));
+            }
+            case "start" -> {
+                Player target = args.length > 1 ? plugin.getServer().getPlayerExact(args[1]) : null;
+                if (target == null || !plugin.hall().inHall(target)) {
+                    sender.sendMessage(Texts.msg(lang, "admin.no-player"));
+                    return true;
+                }
+                Difficulty d = args.length > 2 ? Difficulty.parse(args[2]).orElse(Difficulty.NORMAL)
+                        : plugin.data(target).chosen();
+                plugin.startNow(target, d);
+                sender.sendMessage(Texts.msg(lang, "admin.started", Placeholder.unparsed("name", target.getName())));
             }
             case "debug", "loesen", "taler" -> {
                 Player target = args.length > 1 ? plugin.getServer().getPlayerExact(args[1])

@@ -123,7 +123,7 @@ public final class RoomPlans {
                 for (int y = height - 1; y >= 3; y--) {
                     var d = p.get(x, y, z);
                     if (d == null || d.getMaterial() == org.bukkit.Material.CAVE_AIR) {
-                        p.set(x, y, z, "light[level=13]");
+                        p.set(x, y, z, "light[level=15]");
                         break;
                     }
                 }
@@ -253,7 +253,7 @@ public final class RoomPlans {
         p.set(-7, 1, -4, "grindstone[face=floor,facing=east]");
         p.set(7, 1, -6, "stonecutter[facing=west]");
         p.set(7, 1, -5, "blast_furnace[facing=west]");
-        p.set(7, 1, 6, "lectern[facing=west]");
+        p.set(7, 1, 6, "bookshelf");
         for (int z = 4; z <= 6; z++) {
             p.set(-7, 1, z, "spruce_fence");
             p.set(-7, 2, z, "lightning_rod[facing=up]");
@@ -356,7 +356,7 @@ public final class RoomPlans {
                 p.set(-7, 2, z, "bookshelf");
                 p.set(7, 2, z, "bookshelf");
             }
-            p.set(-7, 1, 6, "lectern[facing=east]");
+            p.set(-7, 1, 6, "bookshelf");
         } else {
             for (int[] c : new int[][] {{-6, -6}, {6, -6}, {-6, 6}, {6, 6}}) {
                 p.set(c[0], 1, c[1], pal.pillar());
@@ -419,14 +419,28 @@ public final class RoomPlans {
             p.set(-7, 2, z, z % 2 == 0 ? "bookshelf" : "barrel[facing=east]");
         }
         p.set(-3, 2, -3, "candle[candles=2,lit=true]");
-        // Treppe hinab zur nächsten Etage
+        // Treppe hinab zur nächsten Etage: eine Stufe pro Reihe, dahinter wird es dunkel
         for (int x = -2; x <= 2; x++) {
-            for (int z = 3; z <= 6; z++) {
-                p.set(x, 0, z, pal.stairs() + "[facing=north]");
+            p.set(x, 0, 3, pal.stairs() + "[facing=north]");
+            for (int z = 4; z <= 7; z++) {
+                int step = z - 3;
+                for (int y = -step + 1; y <= 0; y++) {
+                    p.set(x, y, z, "cave_air");
+                }
+                p.set(x, -step, z, pal.stairs() + "[facing=north]");
+                for (int y = -5; y < -step; y++) {
+                    p.set(x, y, z, pal.wall());
+                }
             }
-            p.set(x, 0, 7, pal.pillar());
+            for (int y = -5; y <= 0; y++) {
+                p.set(x, y, 8, "black_concrete");
+            }
         }
-        for (int z = 3; z <= 6; z++) {
+        for (int z = 3; z <= 7; z++) {
+            for (int y = -5; y <= 0; y++) {
+                p.set(-3, y, z, pal.wall());
+                p.set(3, y, z, pal.wall());
+            }
             p.set(-3, 1, z, pal.wallBlock());
             p.set(3, 1, z, pal.wallBlock());
         }

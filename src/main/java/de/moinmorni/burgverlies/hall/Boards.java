@@ -46,8 +46,8 @@ public final class Boards {
         for (String lang : LANGS) {
             List<TextDisplay> list = new ArrayList<>();
             list.add(display(new Location(plugin.world(), 0.5, y + 4.2, -9.0)));
-            list.add(display(new Location(plugin.world(), -8.5, y + 3.2, -4.5)));
-            list.add(display(new Location(plugin.world(), 9.5, y + 3.2, -4.5)));
+            list.add(display(new Location(plugin.world(), -8.5, y + 3.6, -2.5)));
+            list.add(display(new Location(plugin.world(), 9.5, y + 3.6, -2.5)));
             displays.put(lang, list);
         }
         update();
