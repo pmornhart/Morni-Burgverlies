@@ -29,15 +29,17 @@ Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und a
 - Geprüft: 26 Unit-Tests (Etagen-Würfel mit 400 Startwerten × 3 Etagen × 3–8 Räume: verbunden, keine Überschneidung,
   Türen passen, Fallengänge geradeaus, Rätsel und bröckelnder Boden lösbar; Schwierigkeit/Spielerzahl, Wellen,
   Wiederbelebung, Preise, Beute, Punkte, Fallen-Takt, Suche, Spuren, Texte).
-- Echter Test mit Paper 26.1.2 + ViaVersion/ViaBackwards und vier Test-Spielern (mineflayer), zufällige Etagen: 92/94
-  im ersten Lauf (zwei Fehler behoben: Zähler im Test, Kerkermeister begann Abschnitt 2 mit dem alten Angriff);
-  mit `SEED=8` (Siegelkammer, Brunnenschacht, Glutkammer, Gruft, Weinkeller …): 98/98. Geprüft: Torhaus, Sprache,
-  Party (nur Leitung startet), Menü, drei Etagen bis zum Sieg, Fallgitter, Wellen, Fallen inkl. bröckelndem Stein und
-  Grube, Rätsel mit Hebeln und Platten (Fehler → Spinnen), Truhen, Krämerin (Schwert, Wiederbelebung), Wiederbeleben
-  per Schleichen, Ausbluten, Rückkehr auf neuer Etage, Rast, Kerkermeister (Leben, Leiste, drei Abschnitte,
-  Unverwundbarkeit, Wachen, Ketten, Sieg), Statistik ans Netzwerk, Spielerdatei, Bestenliste, Spuren, Niederlage
-  allein, Mitspieler-Suche, /verlassen.
-- Bilder mit echtem Client 26.3 (über ViaBackwards) nur lokal unter `~/mm-cache/bilder-burgverlies`.
+- Echter Test mit Paper 26.1.2 + ViaVersion/ViaBackwards und vier Test-Spielern (mineflayer): zufällige Etagen
+  **101/101**, mit `SEED=8` (Siegelkammer, Brunnenschacht, Glutkammer, Gruft, Weinkeller …) **98/98**; Server-Log ohne
+  Fehler. Geprüft: Torhaus, Sprache, Party (nur Leitung startet), Menü, drei Etagen bis zum Sieg, Fallgitter, Wellen,
+  Fallen inkl. bröckelndem Stein und Grube, Rätsel mit Hebeln und Platten (Fehler → Spinnen), Truhen, Krämerin
+  (Schwert, Wiederbelebung), Wiederbeleben per Schleichen, Ausbluten, Rückkehr auf neuer Etage, Rast, Kerkermeister
+  (Leben, Leiste, drei Abschnitte, Unverwundbarkeit, Wachen, Ketten, Sieg), Statistik ans Netzwerk, Spielerdatei,
+  Bestenliste, Spuren, Niederlage allein, Mitspieler-Suche, /verlassen, drei Abstiege nacheinander im selben Verlies.
+- Funde im echten Test behoben: Kerkermeister begann Abschnitt 2 mit dem alten Angriff; Neubau eines Verlieses brach
+  ab, wenn dort noch ein Lesepult aus einem früheren Abstieg stand; Tafeln im Torhaus verschwanden ohne Spieler.
+- Bilder mit echtem Client 26.3 (über ViaBackwards, eigenes Xvfb `:97`) von Torhaus und allen Räumen einer Etagenfolge
+  nur lokal unter `~/mm-cache/bilder-burgverlies` (nicht im Repo).
 
 ## Offen
 
