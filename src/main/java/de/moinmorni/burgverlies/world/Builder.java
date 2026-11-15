@@ -166,6 +166,17 @@ public final class Builder {
         return out;
     }
 
+    /** Rüstungsständer eines Plans an ihre Weltstelle (Blickrichtung mitgedreht). */
+    public List<Plan.Stand> transformStands(Plan plan, int ox, int oy, int oz, int quarters) {
+        List<Plan.Stand> out = new ArrayList<>();
+        int q = Math.floorMod(quarters, 4);
+        for (Plan.Stand s : plan.stands()) {
+            int[] w = rotate(s.x(), s.z(), q);
+            out.add(new Plan.Stand(ox + w[0], oy + s.y(), oz + w[1], s.facing().rotate(q), s.kit()));
+        }
+        return out;
+    }
+
     static int[] rotate(int x, int z, int q) {
         int nx = x;
         int nz = z;

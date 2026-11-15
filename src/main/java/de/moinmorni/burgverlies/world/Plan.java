@@ -25,6 +25,10 @@ public final class Plan {
     public record Banner(int x, int y, int z, List<Pattern> patterns) {
     }
 
+    /** Rüstungsständer als Schmuck (Wesen, keine Blöcke): {@code kit} = leather, chain, iron, gold, diamond. */
+    public record Stand(int x, int y, int z, de.moinmorni.burgverlies.dungeon.Dir facing, String kit) {
+    }
+
     private static final Map<String, BlockData> CACHE = new HashMap<>();
     private static final int OFFSET = 2048;
     private static final int BITS = 16;
@@ -33,6 +37,7 @@ public final class Plan {
 
     private final Map<Long, BlockData> blocks = new LinkedHashMap<>();
     private final List<Banner> banners = new ArrayList<>();
+    private final List<Stand> stands = new ArrayList<>();
     private int minX = Integer.MAX_VALUE;
     private int minY = Integer.MAX_VALUE;
     private int minZ = Integer.MAX_VALUE;
@@ -123,6 +128,14 @@ public final class Plan {
     public void banner(int x, int y, int z, String blockSpec, List<Pattern> patterns) {
         set(x, y, z, blockSpec);
         banners.add(new Banner(x, y, z, List.copyOf(patterns)));
+    }
+
+    public void stand(int x, int y, int z, de.moinmorni.burgverlies.dungeon.Dir facing, String kit) {
+        stands.add(new Stand(x, y, z, facing, kit));
+    }
+
+    public List<Stand> stands() {
+        return stands;
     }
 
     public List<Banner> banners() {

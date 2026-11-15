@@ -107,6 +107,40 @@ public final class Mobs {
         return mob;
     }
 
+    /** Rüstungsständer als Schmuck (Rüstkammer, Wachstube) – gehört zum Abstieg und verschwindet mit ihm. */
+    static void stand(Run run, org.bukkit.World world, de.moinmorni.burgverlies.world.Plan.Stand s) {
+        Location l = new Location(world, s.x() + 0.5, s.y(), s.z() + 0.5,
+                de.moinmorni.burgverlies.world.Layout.yaw(s.facing()), 0f);
+        org.bukkit.entity.ArmorStand a = world.spawn(l, org.bukkit.entity.ArmorStand.class, st -> {
+            mark(st, run, null);
+            st.addScoreboardTag("bv_deko");
+            st.setInvulnerable(true);
+            st.setArms(true);
+            st.setBasePlate(false);
+            st.setGravity(false);
+            st.setCanPickupItems(false);
+            EntityEquipment eq = st.getEquipment();
+            Material[] set = switch (s.kit()) {
+                case "chain" -> new Material[] {Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE,
+                    Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS, Material.STONE_SWORD};
+                case "gold" -> new Material[] {Material.GOLDEN_HELMET, Material.GOLDEN_CHESTPLATE,
+                    Material.GOLDEN_LEGGINGS, Material.GOLDEN_BOOTS, Material.GOLDEN_SWORD};
+                case "diamond" -> new Material[] {Material.DIAMOND_HELMET, Material.DIAMOND_CHESTPLATE,
+                    Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS, Material.SHIELD};
+                case "leather" -> new Material[] {Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE,
+                    Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS, Material.BOW};
+                default -> new Material[] {Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS,
+                    Material.IRON_BOOTS, Material.IRON_SWORD};
+            };
+            eq.setHelmet(new ItemStack(set[0]));
+            eq.setChestplate(new ItemStack(set[1]));
+            eq.setLeggings(new ItemStack(set[2]));
+            eq.setBoots(new ItemStack(set[3]));
+            eq.setItemInMainHand(new ItemStack(set[4]));
+        });
+        run.entities.add(a.getUniqueId());
+    }
+
     static void health(LivingEntity e, double hp) {
         AttributeInstance max = e.getAttribute(Attribute.MAX_HEALTH);
         if (max != null) {

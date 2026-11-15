@@ -186,11 +186,13 @@ public final class Runs {
         Builder b = plugin.builder();
         List<Builder.Put> puts = new ArrayList<>();
         List<Plan.Banner> banners = new ArrayList<>();
+        List<Plan.Stand> stands = new ArrayList<>();
         for (Room room : run.rooms[floor]) {
             PlacedRoom pr = room.placed;
             Plan p = RoomPlans.build(pr.template(), floor, plan.seed() + pr.index(), room.crumble);
             int[] c = Layout.center(run.slot, floor, pr);
             puts.addAll(b.transform(p, c[0], c[1], c[2], pr.rotation(), banners));
+            stands.addAll(b.transformStands(p, c[0], c[1], c[2], pr.rotation()));
         }
         for (int i = 0; i + 1 < plan.size(); i++) {
             puts.addAll(Doors.corridor(run.slot, floor, plan.room(i), plan.room(i + 1), plan.seed()));
@@ -205,6 +207,9 @@ public final class Runs {
         }
         b.place(plugin.world(), puts, banners, () -> {
             if (run.stage != Run.Stage.ENDED) {
+                for (Plan.Stand s : stands) {
+                    Mobs.stand(run, plugin.world(), s);
+                }
                 done.run();
             }
         });

@@ -26,7 +26,7 @@ Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und a
 ## Stand (15.11.2026)
 
 - Version 0.1.0 (erster Stand, Branch `claude/erster-stand`, noch nicht veröffentlicht): alles im README.
-- Geprüft: 26 Unit-Tests (Etagen-Würfel mit 400 Startwerten × 3 Etagen × 3–8 Räume: verbunden, keine Überschneidung,
+- Geprüft: 28 Unit-Tests (Etagen-Würfel mit 400 Startwerten × 3 Etagen × 3–8 Räume: verbunden, keine Überschneidung,
   Türen passen, Fallengänge geradeaus, Rätsel und bröckelnder Boden lösbar; Schwierigkeit/Spielerzahl, Wellen,
   Wiederbelebung, Preise, Beute, Punkte, Fallen-Takt, Suche, Spuren, Texte).
 - Echter Test mit Paper 26.1.2 + ViaVersion/ViaBackwards und vier Test-Spielern (mineflayer): zufällige Etagen
@@ -38,6 +38,12 @@ Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und a
   Bestenliste, Spuren, Niederlage allein, Mitspieler-Suche, /verlassen, drei Abstiege nacheinander im selben Verlies.
 - Funde im echten Test behoben: Kerkermeister begann Abschnitt 2 mit dem alten Angriff; Neubau eines Verlieses brach
   ab, wenn dort noch ein Lesepult aus einem früheren Abstieg stand; Tafeln im Torhaus verschwanden ohne Spieler.
+- Einrichtung 2 (Coordinator-Wunsch): jeder Raum klar erkennbar eingerichtet (Fassregale, Stockbetten, Zellen mit
+  Stroh und Ketten, Steinsärge, Rüstungsständer, Goldhaufen, Theke, großer Thronsaal mit Säulenreihen, Bannern und
+  Feuerschalen), Wandsäulen mit Bögen, Laternen, Kerzen, Seelenfeuer, gedämpftes Licht. `dungeon/RoomSpace` legt fest,
+  was fürs Spiel frei bleiben muss (Türen, Kreuz durch die Mitte, Gegner-Stellen, Fallen, Rätsel, Truhen, Krämerin,
+  Treppe, Kampffläche) – Einrichtung wird dort nach dem Schmücken wieder geräumt (Unit-Test `RoomSpaceTest`).
+  Echt: zufällig 94/94, `SEED=8` 98/98, Log ohne Fehler. Bilder v2 lokal unter `~/mm-cache/bilder-burgverlies-v2`.
 - Bilder mit echtem Client 26.3 (über ViaBackwards, eigenes Xvfb `:97`) von Torhaus und allen Räumen einer Etagenfolge
   nur lokal unter `~/mm-cache/bilder-burgverlies` (nicht im Repo).
 

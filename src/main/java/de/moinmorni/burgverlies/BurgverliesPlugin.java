@@ -49,7 +49,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class BurgverliesPlugin extends JavaPlugin {
 
     /** Bau-Version des Torhauses: erhöhen, wenn es sich ändert – dann wird es beim nächsten Start neu gebaut. */
-    public static final int HALL_VERSION = 1;
+    public static final int HALL_VERSION = 2;
     private static final long SECOND = 20L;
     private static final long LANGUAGE_CHECK = 40L;
     private static final long STATE_REFRESH = 20L * 60;
@@ -134,7 +134,8 @@ public final class BurgverliesPlugin extends JavaPlugin {
             hall.enter(p);
         }
         stateChanged();
-        getLogger().info("Burgverlies ist bereit: " + RoomCatalog.all().size() + " Raumvorlagen, bis zu "
+        getLogger().info("Burgverlies ist bereit: " + RoomCatalog.all().size() + " Raumvorlagen (Einrichtung "
+                + RoomPlans.VERSION + "), bis zu "
                 + settings.maxRuns() + " Abstiege gleichzeitig.");
     }
 
