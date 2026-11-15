@@ -56,6 +56,18 @@ public final class TrapLayout {
         return crumbling.contains(key(x, z));
     }
 
+    /** Erste bröckelnde Stelle {x, z} in Lauf-Richtung (für Tests), sonst {@code null}. */
+    public int[] first() {
+        for (int z = zMin; z <= zMax; z++) {
+            for (int x = -half; x <= half; x++) {
+                if (crumbles(x, z)) {
+                    return new int[] {x, z};
+                }
+            }
+        }
+        return null;
+    }
+
     public int count() {
         return crumbling.size();
     }

@@ -188,6 +188,8 @@ public final class Boss {
     private void transition() {
         invulnerable = TRANSITION;
         pending = null;
+        // Der neue Abschnitt beginnt mit seinem eigenen Angriff (Wachen bzw. Ketten).
+        rotation = 0;
         cooldown = 40;
         entity.setAware(false);
         bar.name(name());

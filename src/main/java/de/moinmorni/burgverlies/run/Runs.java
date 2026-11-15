@@ -140,7 +140,8 @@ public final class Runs {
         }
         int bleedSeconds = plugin.settings().bleedSeconds() > 0 ? plugin.settings().bleedSeconds()
                 : diff.bleedSeconds();
-        Run run = new Run(nextId++, slot, random.nextLong(), diff, lang(team.get(0)), players,
+        long seed = plugin.settings().seed() != 0 ? plugin.settings().seed() : random.nextLong();
+        Run run = new Run(nextId++, slot, seed, diff, lang(team.get(0)), players,
                 plugin.settings().revives(), bleedSeconds * 20 / Downs.STEP,
                 plugin.settings().reviveSeconds() * 20 / Downs.STEP);
         runs.put(run.id, run);
@@ -847,7 +848,9 @@ public final class Runs {
                     .append(",\"mobs\":").append(r.mobs.size());
             case TRAP -> s.append(",\"fires\":").append(r.trapFires).append(",\"falls\":").append(r.falls)
                     .append(",\"goal\":").append(xyz(at(run, r, new Pos(0, 1, r.placed.template().goalZ()), null)))
-                    .append(",\"crumble\":").append(r.crumble == null ? 0 : r.crumble.count());
+                    .append(",\"crumble\":").append(r.crumble == null ? 0 : r.crumble.count())
+                    .append(",\"tile\":").append(r.crumble == null || r.crumble.first() == null ? "null"
+                            : xyz(at(run, r, new Pos(r.crumble.first()[0], 1, r.crumble.first()[1]), null)));
             case PUZZLE -> {
                 s.append(",\"plates\":").append(r.placed.template().plates()).append(",\"mobs\":").append(r.mobs.size());
                 if (r.puzzle != null) {
@@ -873,7 +876,7 @@ public final class Runs {
             }
             case SHOP -> s.append(",\"npc\":\"").append(r.npc == null ? "" : r.npc.toString()).append("\",\"stairs\":")
                     .append(xyz(at(run, r, new Pos(0, 1, 4), null))).append(",\"trader\":")
-                    .append(xyz(at(run, r, r.placed.template().npc().add(2, 0, 0), null)));
+                    .append(xyz(at(run, r, r.placed.template().npc().add(3, 0, 0), null)));
             case BOSS -> s.append(",\"intro\":").append(r.intro).append(",\"mobs\":").append(r.mobs.size())
                     .append(",\"boss\":").append(r.boss == null ? "null" : r.boss.json());
             default -> {

@@ -30,3 +30,6 @@ ende-sekunden: 8
 
 # Pause zwischen zwei Wellen (in Spielticks, 20 = 1 Sekunde).
 wellen-pause-ticks: 30
+
+# Nur zum Testen: fester Startwert für die Etagen (0 = jedes Mal neu gewürfelt).
+startwert: 0

@@ -13,7 +13,8 @@ public record Settings(
         int bleedSeconds,
         int stairsSeconds,
         int endSeconds,
-        int waveDelayTicks) {
+        int waveDelayTicks,
+        long seed) {
 
     private static final int MAX_RUNS = 20;
 
@@ -28,7 +29,8 @@ public record Settings(
                 clamp(c.getInt("wiederbelebung.ausbluten-sekunden", 0), 0, 600),
                 clamp(c.getInt("treppe-sekunden", 3), 1, 30),
                 clamp(c.getInt("ende-sekunden", 8), 2, 60),
-                clamp(c.getInt("wellen-pause-ticks", 30), 10, 200));
+                clamp(c.getInt("wellen-pause-ticks", 30), 10, 200),
+                c.getLong("startwert", 0));
     }
 
     private static int clamp(int v, int min, int max) {
