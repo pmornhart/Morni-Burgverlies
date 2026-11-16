@@ -1,12 +1,12 @@
 # Stand – Morni Burgverlies
 
-**Was es ist:** Der Koop-Modus „Burgverlies“ (EN „Castle Dungeon“) des MoinMorni-Netzwerks (Paper-Plugin
+**Was es ist:** Der Koop-Modus „Burgverlies“ (EN „Castle Dungeon“) des Netzwerks morni.net (Paper-Plugin
 `MorniBurgverlies`, Java 25, Paper 26.x): 1–4 Leute, drei Etagen aus handgebauten Räumen (Kampf, Fallen, Rätsel,
 Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und allein.
 
 ## Aufbau
 
-- `src/main/java/de/moinmorni/burgverlies/`: `BurgverliesPlugin` (Start, Welt, Aufgaben, Gruppe/Party, Zustand),
+- `src/main/java/net/morni/burgverlies/`: `BurgverliesPlugin` (Start, Welt, Aufgaben, Gruppe/Party, Zustand),
   `Settings` (config.yml), `Texts` (de/en), `Ui`, `Items`, `Commands` (/burgverlies, /verlassen, /bvadmin).
 - `dungeon/` (ohne Bukkit, getestet): `Dir`, `Pos`, `RoomType`, `RoomTemplate`, `RoomCatalog` (17 Vorlagen),
   `DungeonGenerator` (Etage würfeln: Reihenfolge nach Regeln, Weg mit Zurückgehen), `PlacedRoom`, `FloorPlan`,
@@ -20,12 +20,18 @@ Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und a
   `Mobs`, `Gear`, `ShopMenu`, `Sidebar`.
 - `hall/`: `Hall`, `Queue` (Mitspieler-Suche), `Boards` (Tafeln je Sprache). `menu/`: `Menu`, `Menus`.
 - `listen/`: `PlayerListener`, `CombatListener`, `GuardListener`.
-- `src/api/java/de/moinmorni/api/MoinMorni.java`: Kopie der Netzwerk-Schnittstelle (nicht in der Jar).
+- `src/api/java/net/morni/api/MorniNet.java`: Kopie der Netzwerk-Schnittstelle (nicht in der Jar).
 - `test/`: `run.sh` (echter Server), `burgverlies-test.cjs` (mineflayer), `rcon.cjs`, `fake-network/`.
 
 ## Stand (16.11.2026)
 
-- Version 0.1.1 (Branch `claude/kerkermeister-ziel`, wartet auf Philips Go): Der Kerkermeister blieb am Thron stehen, solange alle
+- Version 0.1.2 (Branch `claude/morni-net`, wartet auf Philips Go): **Umbenannt in morni.net** (vorher MoinMorni,
+  16.11.2026) – Paket `net.morni.burgverlies`, Schnittstelle `net.morni.api.MorniNet` vom Netzwerk-Plugin „MorniNet“
+  (`softdepend: [MorniNet]`), Recht `morninet.burgverlies.admin`, Texte und Plugin-Angaben mit morni.net. Plugin-Name,
+  Datenordner `plugins/MorniBurgverlies` und Torhaus bleiben (kein Neubau). `test/run.sh` löscht alte Jars im
+  Test-Server (auch umbenannte). Geprüft: 28 Unit-Tests, Paper 26.1 übersetzt, echt mit Paper 26.1.2: zufällige
+  Etagen **106/106**, `SEED=8` **99/99**, Server-Log ohne Fehler.
+- Version 0.1.1 (16.11. veröffentlicht, Release v0.1.1): Der Kerkermeister blieb am Thron stehen, solange alle
   mehr als ~12 Blöcke weg waren (beim Trailer-Dreh gesehen) – jetzt Sichtweite 40 (`FOLLOW_RANGE`), Ziel gleich beim
   Erscheinen und alle Sekunde neu, wenn sein Ziel am Boden liegt oder den Saal verlässt (`Boss.hunt`); `/bvadmin debug`
   zeigt `target`, der echte Test prüft es.
@@ -53,7 +59,7 @@ Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und a
 
 ## Offen
 
-- Philip: Bilder ansehen; Go für `main` (dann erstes Release v0.1.0).
+- Philip: Bilder ansehen; Go für `main` (dann Release v0.1.2).
 - Nicht echt geprüft: richtiger Kampf mit echtem Client (Treffer, Schockwelle ausweichen per Sprung), Bedrock-Spieler,
   Netzwerk mit echtem Hub.
 - Einstellungen im Panel des Netzwerks (Einstellungs-Katalog) – gehört ins Netzwerk-Repo.
