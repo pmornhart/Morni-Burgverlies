@@ -41,7 +41,7 @@ Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und a
   geben können): Kerkertaler für die Krämerin im laufenden Abstieg, zählt nicht als verdient, Recht
   `moinmorni.burgverlies.admin`. `/bvadmin debug <spieler>` zeigt auch jemanden, dessen Platz frei ist, dazu `paused`,
   `elapsed` und `away`. Test-Netzwerk schreibt `playing`, `ask-to-lobby` (fragt nur, solange „spielt“), `hold-slot` mit
-  und spielt mit `api=1` ein älteres Netzwerk-Plugin. Geprüft: 30 Unit-Tests (neu `SettingsTest`), Paper 26.1 übersetzt,
+  und spielt mit `api=1` ein älteres Netzwerk-Plugin. Geprüft: 30 Unit-Tests (neu `SettingsTest`; JUnit 6.1.3, Issue #3), Paper 26.1 übersetzt,
   echt mit Paper 26.1.2 (`test/run.sh`, `rueckkehr-sekunden: 12`): zufällige Etagen **125/125**, `SEED=8` **125/125**, Log
   ohne Fehler – neu: „spielt“ im Abstieg und danach nicht mehr; Geld per Befehl (+50, Bestätigung, Spieler liest es,
   ohne Recht nichts); Dora weg → Carl erfährt es, holdSlot 12, Carl spielt weiter und betritt ohne sie den nächsten
