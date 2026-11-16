@@ -1,6 +1,6 @@
 # Morni Burgverlies
 
-Der Koop-Modus **Burgverlies** (englisch *Castle Dungeon*) des Minecraft-Netzwerks **morni.net**:
+Der Koop-Modus **Burgverlies** (englisch *Castle Dungeon*) des Minecraft-Netzwerks **MoinMorni** (moinmorni.net):
 1 bis 4 Leute steigen gemeinsam tief unter die Burg – durch Kampfräume, Fallengänge, Rätsel und Schatzkammern bis
 zum Endgegner, dem **Kerkermeister**. Ein Paper-Plugin für Paper 26.x (Java 25). Es läuft im Netzwerk und auch ganz
 allein.
@@ -64,12 +64,12 @@ allein.
 | `/bv suchen [leicht\|normal\|schwer]` | Mitspieler suchen |
 | `/verlassen` | Suche oder Abstieg verlassen |
 | `/bv stats [spieler]` · `/bv top` · `/bv spuren` | Statistik, Bestenliste, Spuren |
-| `/bvadmin info\|neubauen\|neuladen` | Verwaltung (`morninet.burgverlies.admin`) |
+| `/bvadmin info\|neubauen\|neuladen` | Verwaltung (`moinmorni.burgverlies.admin`) |
 | `/bvadmin start <spieler> [schwierigkeit]` · `debug` · `loesen` · `taler` | für Team und Tests |
 
 ## Im Netzwerk
 
-Das Netzwerk-Plugin („MorniNet“) stellt die Schnittstelle `net.morni.api.MorniNet` bereit; Burgverlies nutzt sie,
+Das Netzwerk-Plugin („MoinMorni“) stellt die Schnittstelle `de.moinmorni.api.MoinMorni` bereit; Burgverlies nutzt sie,
 wenn sie da ist (`softdepend`): Sprache, Party, Statistik, Zustand für Lobby-Figur und Webseite, zurück zur Lobby. Ohne
 Netzwerk: deutsche Texte, Statistik nur lokal, „zur Lobby“ trennt die Verbindung mit einem Hinweis.
 
