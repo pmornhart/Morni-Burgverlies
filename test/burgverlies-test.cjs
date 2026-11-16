@@ -424,6 +424,9 @@ async function playBoss(bots, room) {
     JSON.stringify(boss));
   check('Boss-Leiste und Titel', anna.bossBarSeen > 0 && sawTitle(anna, /Der Kerkermeister/) && sawTitle(bert, /The Gaoler/),
     `Leisten ${anna.bossBarSeen}`);
+  // Er wartet nicht, bis jemand nah genug ist (früher nur ~12 Blöcke), sondern jagt gleich einen, der steht.
+  const hunting = await waitFor(async () => ['Anna', 'Bert'].includes((await dbg('Anna')).cur.boss.target), 3000);
+  check('Der Kerkermeister geht gleich auf jemanden los', hunting, JSON.stringify((await dbg('Anna')).cur.boss));
   const shock = await waitFor(async () => (await dbg('Anna')).cur.boss.shockwaves >= 1, 12000);
   check('Abschnitt 1: Schockwelle mit Warnung', shock && anna.bars.some((b) => /Schockwelle/.test(b)));
   // → Abschnitt 2
