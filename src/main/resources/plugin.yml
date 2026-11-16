@@ -1,12 +1,12 @@
 name: MorniBurgverlies
 version: '${project.version}'
-main: de.moinmorni.burgverlies.BurgverliesPlugin
+main: net.morni.burgverlies.BurgverliesPlugin
 api-version: '1.21'
-description: Burgverlies für das MoinMorni-Netzwerk – Koop-Verlies für 1 bis 4 mit Fallen, Schätzen und dem Kerkermeister.
-authors: [MoinMorni]
-website: https://moinmorni.net
+description: Burgverlies für das Netzwerk morni.net – Koop-Verlies für 1 bis 4 mit Fallen, Schätzen und dem Kerkermeister.
+authors: [morni.net]
+website: https://morni.net
 # Läuft mit dem Netzwerk-Plugin (Sprache, Party, Statistik) und auch allein.
-softdepend: [MoinMorni]
+softdepend: [MorniNet]
 
 commands:
   burgverlies:
@@ -20,9 +20,9 @@ commands:
   bvadmin:
     description: Verwaltung (info, neubauen, neuladen, debug, loesen, taler, start)
     usage: /bvadmin <info|neubauen|neuladen|debug|loesen|taler|start> [spieler] [anzahl|schwierigkeit]
-    permission: moinmorni.burgverlies.admin
+    permission: morninet.burgverlies.admin
 
 permissions:
-  moinmorni.burgverlies.admin:
+  morninet.burgverlies.admin:
     description: Burgverlies verwalten und im Kreativmodus in der Burgverlies-Welt bauen
     default: op
