@@ -46,14 +46,23 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Firework;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 
 /**
  * Alle laufenden Abstiege: starten, Etagen bauen, Räume betreten und schaffen, nächste Etage, Sieg oder
  * Niederlage, Statistik. Jeder Abstieg hat seinen eigenen Platz in der Welt.
+ *
+ * <p>Verbindung mitten im Abstieg weg: Der Platz bleibt {@code rueckkehr-sekunden} frei, die Gruppe spielt ohne die
+ * Person weiter (Kerkertaler, Einkäufe und Wiederbelebungen bleiben). Kommt sie rechtzeitig zurück, ist sie wieder bei
+ * der Gruppe – im selben Raum wie die Gruppe, mit Ausrüstung und Leben. Sind alle weg, hält der Abstieg an (Gegner
+ * eingefroren, Zeit steht). Kommt niemand, gilt es wie Verlassen.
  */
 public final class Runs {
+
+    /** So lange erfährt jemand beim nächsten Betreten noch, dass der Abstieg ohne ihn weiterging. */
+    private static final long MISSED_MS = 15 * 60_000L;
 
     private final BurgverliesPlugin plugin;
     private final RoomLogic logic;
@@ -62,6 +71,8 @@ public final class Runs {
     private final Map<Integer, Run> runs = new LinkedHashMap<>();
     private final Map<UUID, Run> byPlayer = new HashMap<>();
     private final Random random = new Random();
+    /** Wer zu spät kam (Abstieg ging ohne ihn weiter oder ist vorbei): Hinweis beim nächsten Betreten. */
+    private final Map<UUID, Long> missed = new HashMap<>();
     private int nextId = 1 + new Random().nextInt(1_000_000) * 100;
     private long tick;
 
@@ -231,6 +242,7 @@ public final class Runs {
             Downs.reset(p);
             RoomLogic.heal(p);
             Gear.start(p, h, run.difficulty, lang(p));
+            plugin.net().playing(p, true);
         }
         arrive(run);
         plugin.stateChanged();
@@ -259,9 +271,15 @@ public final class Runs {
     public void tick() {
         tick++;
         for (Run run : List.copyOf(runs.values())) {
+            checkAway(run);
             if (run.stage != Run.Stage.PLAYING) {
                 continue;
             }
+            if (nobodyPlaying(run)) {
+                pause(run);
+                continue;
+            }
+            resume(run);
             try {
                 logic.tick(run, run.room());
                 if (run.stage != Run.Stage.PLAYING) {
@@ -403,12 +421,14 @@ public final class Runs {
         if (run.stage == Run.Stage.ENDED) {
             return;
         }
+        resume(run);
         run.stage = Run.Stage.ENDED;
         for (Room r : run.floorRooms()) {
             if (r.boss != null) {
                 r.boss.hideBar();
             }
         }
+        releaseAway(run);
         long time = run.elapsed();
         int score = Score.compute(won, run.roomsCleared, run.revives.totalDowns(), time, run.difficulty);
         List<Player> online = players(run);
@@ -427,6 +447,7 @@ public final class Runs {
         }
         for (Player p : online) {
             String lang = lang(p);
+            plugin.net().playing(p, false);
             Downs.reset(p);
             if (p.getGameMode() == GameMode.SPECTATOR) {
                 p.setGameMode(GameMode.ADVENTURE);
@@ -510,12 +531,193 @@ public final class Runs {
         plugin.stateChanged();
     }
 
+    /**
+     * Verbindung weg. Mitten im Abstieg bleibt der Platz {@code rueckkehr-sekunden} frei (true) – die Gruppe spielt
+     * weiter. Sonst (aus, Abstieg noch im Bau oder vorbei) wie Verlassen (false).
+     */
+    public boolean quit(Player p) {
+        UUID u = p.getUniqueId();
+        Run run = byPlayer.get(u);
+        Hero h = run == null ? null : run.hero(u);
+        int seconds = plugin.settings().returnSeconds();
+        if (run == null || h == null || h.left() || run.stage != Run.Stage.PLAYING || seconds <= 0
+                || run.away.containsKey(u)) {
+            leave(p, true);
+            return false;
+        }
+        run.away.put(u, new Run.Away(System.currentTimeMillis() + seconds * 1000L, PlayerState.of(p), run.floor,
+                run.current, run.revives.state(u) != Revives.State.UP));
+        plugin.net().holdSlot(u, seconds);
+        for (Room r : run.floorRooms()) {
+            if (r.boss != null) {
+                r.boss.hideFor(p);
+            }
+        }
+        for (Mob m : p.getWorld().getNearbyEntitiesByType(Mob.class, p.getLocation(), 48)) {
+            if (p.equals(m.getTarget())) {
+                m.setTarget(null);
+            }
+        }
+        broadcastExcept(run, p, "run.away", Placeholder.unparsed("name", p.getName()),
+                Placeholder.unparsed("n", String.valueOf(seconds)));
+        plugin.stateChanged();
+        return true;
+    }
+
+    /**
+     * Beim Betreten: Ist der Platz im Abstieg noch frei, geht es weiter – bei der Gruppe (im selben Raum wie sie; ist
+     * sie noch dort, wo man ging, genau an der alten Stelle), mit Ausrüstung und Leben. false = kein Platz frei.
+     */
+    public boolean comeBack(Player p) {
+        UUID u = p.getUniqueId();
+        Run run = byPlayer.get(u);
+        Run.Away a = run == null ? null : run.away.remove(u);
+        if (a == null || run.stage == Run.Stage.ENDED) {
+            return false;
+        }
+        missed.remove(u);
+        plugin.net().holdSlot(u, 0);
+        String lang = lang(p);
+        a.state().restore(p);
+        boolean sameRoom = a.floor() == run.floor && a.room() == run.current;
+        switch (run.revives.state(u)) {
+            case OUT -> downs.applyOut(run, p);
+            case DOWN -> {
+                p.setGameMode(GameMode.ADVENTURE);
+                if (!sameRoom) {
+                    p.teleport(entry(run, run.room()));
+                }
+                Downs.applyDown(p);
+            }
+            case UP -> {
+                p.setGameMode(GameMode.ADVENTURE);
+                if (a.down()) {
+                    // Lag beim Gehen am Boden (oder war raus), die Gruppe hat inzwischen gerastet: wieder auf den
+                    // Beinen wie alle.
+                    Downs.applyUp(p, 1.0);
+                }
+                if (!sameRoom) {
+                    p.teleport(entry(run, run.room()));
+                }
+            }
+        }
+        p.setFallDistance(0);
+        rejoin(p);
+        plugin.net().playing(p, true);
+        Ui.title(p, Texts.text(lang, "back.again.title"), Texts.text(lang, "back.again.subtitle"), 2500);
+        p.sendMessage(Texts.msg(lang, sameRoom ? "back.again" : "back.again.moved"));
+        broadcastExcept(run, p, "run.returned", Placeholder.unparsed("name", p.getName()));
+        sidebars(run);
+        plugin.stateChanged();
+        return true;
+    }
+
+    /** Kam {@code u} zu spät zurück (Abstieg ging ohne ihn weiter)? Gibt es nur einmal. */
+    public boolean wasMissed(UUID u) {
+        Long at = missed.remove(u);
+        return at != null && System.currentTimeMillis() - at <= MISSED_MS;
+    }
+
+    /** Frist um: wer bis jetzt nicht zurück ist, verlässt den Abstieg (wie bisher beim Verbindungsabbruch). */
+    private void checkAway(Run run) {
+        if (run.away.isEmpty()) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        for (UUID u : List.copyOf(run.away.keySet())) {
+            Run.Away a = run.away.get(u);
+            if (a == null || a.until() > now) {
+                continue;
+            }
+            run.away.remove(u);
+            noteMissed(u);
+            plugin.net().holdSlot(u, 0);
+            gone(run, u);
+            if (!runs.containsKey(run.id)) {
+                return;
+            }
+        }
+    }
+
+    /** Abstieg vorbei: niemandem mehr einen Platz frei halten. */
+    private void releaseAway(Run run) {
+        for (UUID u : List.copyOf(run.away.keySet())) {
+            run.away.remove(u);
+            byPlayer.remove(u, run);
+            noteMissed(u);
+            plugin.net().holdSlot(u, 0);
+        }
+    }
+
+    private void noteMissed(UUID u) {
+        long now = System.currentTimeMillis();
+        missed.values().removeIf(at -> now - at > MISSED_MS);
+        missed.put(u, now);
+    }
+
+    /** Spielt gerade niemand (alle weg oder nur Zuschauer da), aber jemand darf noch zurückkommen? */
+    private boolean nobodyPlaying(Run run) {
+        return !run.away.isEmpty() && players(run).stream()
+                .noneMatch(p -> run.revives.state(p.getUniqueId()) != Revives.State.OUT);
+    }
+
+    /** Anhalten: Gegner einfrieren, die Uhr steht. */
+    private void pause(Run run) {
+        if (run.pausedAt > 0) {
+            return;
+        }
+        run.pausedAt = System.currentTimeMillis();
+        for (UUID id : run.entities) {
+            if (plugin.getServer().getEntity(id) instanceof Mob m && m.hasAI()) {
+                m.setAI(false);
+                run.frozen.add(id);
+            }
+        }
+    }
+
+    /** Weiter: Gegner wieder los, die Uhr läuft dort weiter, wo sie stand. */
+    private void resume(Run run) {
+        if (run.pausedAt == 0) {
+            return;
+        }
+        if (run.startMs > 0) {
+            run.startMs += System.currentTimeMillis() - run.pausedAt;
+        }
+        run.pausedAt = 0;
+        for (UUID id : run.frozen) {
+            if (plugin.getServer().getEntity(id) instanceof Mob m) {
+                m.setAI(true);
+            }
+        }
+        run.frozen.clear();
+    }
+
+    /** Frist um: raus aus dem Abstieg wie beim Verlassen (Person ist nicht mehr da). */
+    private void gone(Run run, UUID u) {
+        byPlayer.remove(u);
+        Hero h = run.hero(u);
+        if (run.stage != Run.Stage.ENDED && h != null && !h.left()) {
+            if (run.stage == Run.Stage.PLAYING) {
+                record(run, h, false, Score.compute(false, run.roomsCleared, run.revives.downs(u), run.elapsed(),
+                        run.difficulty), run.elapsed());
+            }
+            h.leave();
+            run.revives.remove(u);
+            broadcast(run, "run.away.gone", Placeholder.unparsed("name", h.name()));
+        }
+        afterLeave(run);
+    }
+
     /** Jemand verlässt den Abstieg ({@code quit} = Verbindung weg). */
     public void leave(Player p, boolean quit) {
         Run run = byPlayer.remove(p.getUniqueId());
         if (run == null) {
             return;
         }
+        if (run.away.remove(p.getUniqueId()) != null) {
+            plugin.net().holdSlot(p.getUniqueId(), 0);
+        }
+        plugin.net().playing(p, false);
         Hero h = run.hero(p.getUniqueId());
         if (run.stage != Run.Stage.ENDED && h != null && !h.left()) {
             if (run.stage == Run.Stage.PLAYING) {
@@ -535,10 +737,15 @@ public final class Runs {
         if (!quit) {
             plugin.hall().enter(p);
         }
+        afterLeave(run);
+    }
+
+    /** Nach dem Gehen: ist niemand mehr da (und darf auch keiner zurückkommen), ist der Abstieg vorbei. */
+    private void afterLeave(Run run) {
         if (run.stage == Run.Stage.ENDED) {
             return;
         }
-        if (players(run).isEmpty()) {
+        if (players(run).isEmpty() && run.away.isEmpty()) {
             run.stage = Run.Stage.ENDED;
             for (Room r : run.floorRooms()) {
                 if (r.boss != null) {
@@ -555,6 +762,7 @@ public final class Runs {
     /** Server fährt herunter: alle zurück ins Torhaus, keine Wertung. */
     public void abortAll() {
         for (Run run : List.copyOf(runs.values())) {
+            releaseAway(run);
             run.stage = Run.Stage.ENDED;
             for (Room r : run.floorRooms() == null ? List.<Room>of() : run.floorRooms()) {
                 if (r.boss != null) {
@@ -563,6 +771,7 @@ public final class Runs {
             }
             for (Player p : players(run)) {
                 Downs.reset(p);
+                plugin.net().playing(p, false);
                 plugin.hall().enter(p);
             }
             cleanup(run);
@@ -721,7 +930,7 @@ public final class Runs {
     List<Player> players(Run run) {
         List<Player> out = new ArrayList<>();
         for (Hero h : run.heroes.values()) {
-            if (h.left()) {
+            if (h.left() || run.away.containsKey(h.uuid())) {
                 continue;
             }
             Player p = plugin.getServer().getPlayer(h.uuid());
@@ -810,14 +1019,20 @@ public final class Runs {
 
     /** Zustand eines Abstiegs als eine Zeile JSON (für Tests und Fehlersuche). */
     public String debug(Player p) {
-        Run run = byPlayer.get(p.getUniqueId());
+        return debug(p.getUniqueId());
+    }
+
+    /** Wie oben, auch für jemanden, der gerade nicht da ist. */
+    public String debug(UUID u) {
+        Run run = byPlayer.get(u);
         if (run == null) {
             return "{\"run\":null}";
         }
         StringBuilder s = new StringBuilder("{\"run\":").append(run.id).append(",\"stage\":\"").append(run.stage)
                 .append("\",\"difficulty\":\"").append(run.difficulty.id()).append("\",\"floor\":").append(run.floor)
                 .append(",\"built\":[").append(run.built[0]).append(',').append(run.built[1]).append(',')
-                .append(run.built[2]).append("],\"room\":").append(run.current).append(",\"rooms\":")
+                .append(run.built[2]).append("],\"paused\":").append(run.pausedAt > 0).append(",\"elapsed\":")
+                .append(run.elapsed()).append(",\"room\":").append(run.current).append(",\"rooms\":")
                 .append(run.floorRooms().size()).append(",\"cleared\":").append(run.roomsCleared);
         Room r = run.room();
         s.append(",\"cur\":").append(roomJson(run, r));
@@ -830,7 +1045,7 @@ public final class Runs {
             hj.add("\"" + h.name() + "\":{\"state\":\"" + run.revives.state(h.uuid()) + "\",\"revives\":"
                     + run.revives.revivesLeft(h.uuid()) + ",\"downs\":" + run.revives.downs(h.uuid()) + ",\"taler\":"
                     + h.taler() + ",\"sword\":" + h.level(de.moinmorni.burgverlies.dungeon.Offer.SWORD) + ",\"left\":"
-                    + h.left() + "}");
+                    + h.left() + ",\"away\":" + run.away.containsKey(h.uuid()) + "}");
         }
         s.append(hj).append("}}");
         return s.toString();
@@ -919,6 +1134,21 @@ public final class Runs {
         }
         cleared(run, r);
         return true;
+    }
+
+    /**
+     * /bvadmin geld: Kerkertaler dazugeben (zum Testen – zählt nicht als verdient). Gibt den neuen Stand zurück, -1 =
+     * nicht in einem Abstieg.
+     */
+    public int giveMoney(Player p, int n) {
+        Run run = byPlayer.get(p.getUniqueId());
+        Hero h = run == null ? null : run.hero(p.getUniqueId());
+        if (h == null || h.left()) {
+            return -1;
+        }
+        h.pay(h.taler() + n);
+        sidebars(run);
+        return h.taler();
     }
 
     /** /bvadmin taler */

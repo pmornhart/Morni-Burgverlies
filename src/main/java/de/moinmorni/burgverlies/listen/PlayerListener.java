@@ -38,10 +38,16 @@ public final class PlayerListener implements Listener {
         Player p = e.getPlayer();
         e.joinMessage(null);
         plugin.data(p);
+        if (plugin.runs().comeBack(p)) {
+            return; // Platz im Abstieg war noch frei: zurück zur Gruppe
+        }
         plugin.hall().enter(p);
         String lang = plugin.lang(p);
         de.moinmorni.burgverlies.Ui.title(p, Texts.text(lang, "join.title"), Texts.text(lang, "join.subtitle"), 2500);
         p.sendMessage(Texts.msg(lang, "join.welcome"));
+        if (plugin.runs().wasMissed(p.getUniqueId())) {
+            p.sendMessage(Texts.msg(lang, "run.missed"));
+        }
         plugin.stateChanged();
     }
 
@@ -50,7 +56,8 @@ public final class PlayerListener implements Listener {
         Player p = e.getPlayer();
         e.quitMessage(null);
         plugin.queue().remove(p.getUniqueId(), true);
-        plugin.runs().leave(p, true);
+        plugin.runs().quit(p);
+        plugin.net().forget(p.getUniqueId());
         plugin.store().unload(p.getUniqueId());
         plugin.sidebar().remove(p.getUniqueId());
         plugin.hall().forget(p.getUniqueId());
@@ -81,8 +88,9 @@ public final class PlayerListener implements Listener {
             case Hall.STATS -> plugin.menus().stats(p, plugin.data(p));
             case Hall.TRAILS -> plugin.menus().trails(p);
             case Hall.LOBBY -> {
+                // Eigener Wunsch: das Netzwerk fragt nach, wenn jemand gerade spielt (im Torhaus spielt niemand).
                 p.sendMessage(Texts.msg(plugin.lang(p), "lobby.going"));
-                plugin.net().toLobby(p, Texts.text(plugin.lang(p), "lobby.kick"));
+                plugin.net().askToLobby(p, Texts.text(plugin.lang(p), "lobby.kick"));
             }
             default -> {
                 // unbekannt
