@@ -25,7 +25,15 @@ Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und a
 
 ## Stand (16.11.2026)
 
-- Version 0.1.1 (Branch `claude/kerkermeister-ziel`, wartet auf Philips Go): Der Kerkermeister blieb am Thron stehen, solange alle
+- Version 0.1.3 (Branch `claude/moinmorni`, wartet auf Philips Go): **Name wieder MoinMorni** – 0.1.2 (16.11.
+  veröffentlicht) hatte Burgverlies kurz an einen neuen Netzwerk-Namen angepasst; der war nicht verfügbar, darum ist
+  der Code wieder wie in 0.1.1 (Umbenennung per `git revert` zurückgenommen): Paket `de.moinmorni.burgverlies`,
+  Schnittstelle `de.moinmorni.api.MoinMorni`, Netzwerk-Plugin „MoinMorni“, Recht `moinmorni.burgverlies.admin`.
+  Plugin-Name, Datenordner `plugins/MorniBurgverlies` und Torhaus waren nie anders (kein Umzug, kein Neubau).
+  `test/run.sh` löscht alle alten Jars im Test-Server. Geprüft: 28 Unit-Tests, Paper 26.1 übersetzt, echt mit Paper
+  26.1.2: zufällige Etagen **99/99**, `SEED=8` **99/99**, Burgverlies meldet sich beim Test-Netzwerk
+  „MoinMorni“, Server-Log ohne Fehler.
+- Version 0.1.1 (16.11. veröffentlicht, Release v0.1.1): Der Kerkermeister blieb am Thron stehen, solange alle
   mehr als ~12 Blöcke weg waren (beim Trailer-Dreh gesehen) – jetzt Sichtweite 40 (`FOLLOW_RANGE`), Ziel gleich beim
   Erscheinen und alle Sekunde neu, wenn sein Ziel am Boden liegt oder den Saal verlässt (`Boss.hunt`); `/bvadmin debug`
   zeigt `target`, der echte Test prüft es.
@@ -53,7 +61,7 @@ Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und a
 
 ## Offen
 
-- Philip: Bilder ansehen; Go für `main` (dann erstes Release v0.1.0).
+- Philip: Bilder ansehen; Go für `main` (dann Release v0.1.3).
 - Nicht echt geprüft: richtiger Kampf mit echtem Client (Treffer, Schockwelle ausweichen per Sprung), Bedrock-Spieler,
   Netzwerk mit echtem Hub.
 - Einstellungen im Panel des Netzwerks (Einstellungs-Katalog) – gehört ins Netzwerk-Repo.

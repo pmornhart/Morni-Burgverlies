@@ -92,6 +92,8 @@ party.Anna=Anna,Bert
 EOF
 rm -f "$SERVER/plugins/MoinMorni/calls.log"
 rm -rf "$SERVER/plugins/MorniBurgverlies/spieler" "$SERVER/plugins/MorniBurgverlies/bestenliste.yml"
+# Alte Jars weg (auch solche aus einer Fassung mit anderem Namen), damit nie zwei Fassungen laden.
+rm -f "$SERVER"/plugins/*.jar
 cp "$REPO/target/Morni-Burgverlies.jar" "$SERVER/plugins/"
 cp "$REPO/test/fake-network/target/MoinMorni-FakeNetwork.jar" "$SERVER/plugins/"
 for jar in ${EXTRA_PLUGINS-$CACHE/jars/ViaVersion-5.12.2.jar $CACHE/jars/ViaBackwards-5.12.2.jar}; do
