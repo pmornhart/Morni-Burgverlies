@@ -23,9 +23,13 @@ Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und a
 - `src/api/java/de/moinmorni/api/MoinMorni.java`: Kopie der Netzwerk-Schnittstelle (nicht in der Jar).
 - `test/`: `run.sh` (echter Server), `burgverlies-test.cjs` (mineflayer), `rcon.cjs`, `fake-network/`.
 
-## Stand (15.11.2026)
+## Stand (16.11.2026)
 
-- Version 0.1.0 (erster Stand, Branch `claude/erster-stand`, noch nicht veröffentlicht): alles im README.
+- Version 0.1.1 (Branch `claude/kerkermeister-ziel`, wartet auf Philips Go): Der Kerkermeister blieb am Thron stehen, solange alle
+  mehr als ~12 Blöcke weg waren (beim Trailer-Dreh gesehen) – jetzt Sichtweite 40 (`FOLLOW_RANGE`), Ziel gleich beim
+  Erscheinen und alle Sekunde neu, wenn sein Ziel am Boden liegt oder den Saal verlässt (`Boss.hunt`); `/bvadmin debug`
+  zeigt `target`, der echte Test prüft es.
+- Version 0.1.0 (15.11. veröffentlicht, Release v0.1.0): alles im README.
 - Geprüft: 28 Unit-Tests (Etagen-Würfel mit 400 Startwerten × 3 Etagen × 3–8 Räume: verbunden, keine Überschneidung,
   Türen passen, Fallengänge geradeaus, Rätsel und bröckelnder Boden lösbar; Schwierigkeit/Spielerzahl, Wellen,
   Wiederbelebung, Preise, Beute, Punkte, Fallen-Takt, Suche, Spuren, Texte).

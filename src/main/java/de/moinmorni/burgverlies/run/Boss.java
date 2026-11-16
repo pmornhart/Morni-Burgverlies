@@ -51,6 +51,10 @@ public final class Boss {
     private static final int CHAIN_WARN = 25;
     private static final double SHOCK_RADIUS = 7.5;
     private static final double MELEE = 7;
+    /** So weit „sieht“ er (Vindicator sonst 12) – der ganze Thronsaal. */
+    private static final double FOLLOW_RANGE = 40;
+    /** Wie oft er nachschaut, ob er noch den Richtigen jagt. */
+    private static final int HUNT_TICKS = 20;
 
     private final Runs runs;
     private final Run run;
@@ -68,6 +72,7 @@ public final class Boss {
     private int shockwaves;
     private int summons;
     private int chains;
+    private int hunt;
 
     Boss(Runs runs, Run run, Room room) {
         this.runs = runs;
@@ -90,6 +95,10 @@ public final class Boss {
             if (scale != null) {
                 scale.setBaseValue(SCALE);
             }
+            AttributeInstance follow = v.getAttribute(Attribute.FOLLOW_RANGE);
+            if (follow != null) {
+                follow.setBaseValue(FOLLOW_RANGE);
+            }
             AttributeInstance kb = v.getAttribute(Attribute.KNOCKBACK_RESISTANCE);
             if (kb != null) {
                 kb.setBaseValue(0.6);
@@ -102,6 +111,7 @@ public final class Boss {
             eq.setHelmetDropChance(0f);
         });
         run.entities.add(entity.getUniqueId());
+        hunt();
         bar = BossBar.bossBar(name(), 1f, BossBar.Color.RED, BossBar.Overlay.NOTCHED_10);
         for (Player p : runs.players(run)) {
             p.showBossBar(bar);
@@ -138,7 +148,8 @@ public final class Boss {
         double max = alive() ? entity.getAttribute(Attribute.MAX_HEALTH).getValue() : 0;
         return "{\"health\":" + Math.round(hp) + ",\"max\":" + Math.round(max) + ",\"phase\":" + phase
                 + ",\"invulnerable\":" + invulnerable + ",\"shockwaves\":" + shockwaves + ",\"summons\":" + summons
-                + ",\"chains\":" + chains + ",\"pending\":\"" + (pending == null ? "" : pending.name()) + "\"}";
+                + ",\"chains\":" + chains + ",\"pending\":\"" + (pending == null ? "" : pending.name())
+                + "\",\"target\":\"" + (alive() && entity.getTarget() instanceof Player t ? t.getName() : "") + "\"}";
     }
 
     /** Schaden abfangen, solange er zwischen zwei Abschnitten ist. */
@@ -179,6 +190,9 @@ public final class Boss {
         if (pending != null) {
             telegraph();
             return;
+        }
+        if (--hunt <= 0) {
+            hunt();
         }
         if (--cooldown <= 0) {
             choose();
@@ -333,6 +347,25 @@ public final class Boss {
         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
         p.damage(3 * Scaling.mobDamage(run.difficulty, run.size()), entity);
         runs.soundAll(run, "block.chain.break", 0.6f);
+    }
+
+    /** Er geht von selbst auf den Nächsten los – auch wenn alle Abstand halten oder sein Ziel am Boden liegt. */
+    private void hunt() {
+        hunt = HUNT_TICKS;
+        List<Player> up = upInRoom();
+        if (entity.getTarget() instanceof Player t && up.contains(t)) {
+            return;
+        }
+        Player best = null;
+        double bestD = Double.MAX_VALUE;
+        for (Player p : up) {
+            double d = p.getLocation().distanceSquared(entity.getLocation());
+            if (d < bestD) {
+                bestD = d;
+                best = p;
+            }
+        }
+        entity.setTarget(best);
     }
 
     private List<Player> upInRoom() {
