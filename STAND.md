@@ -25,7 +25,31 @@ Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und a
 
 ## Stand (16.11.2026)
 
-- Version 0.1.3 (Branch `claude/moinmorni`, wartet auf Philips Go): **Name wieder MoinMorni** – 0.1.2 (16.11.
+- Version 0.1.4 (Branch `claude/zurueck-ins-spiel`, wartet auf Philips Go): **Zurück ins Spiel** (Philip: „Wenn das Game
+  crasht, soll man zurück zum Spiel können“ und vor der Lobby nachfragen, solange man spielt). Netzwerk-Schnittstelle 2
+  (Kopie byte-gleich): `playing` vom Start des Abstiegs bis zum Ende bzw. Verlassen (wer vorübergehend raus ist und
+  zuschaut, spielt weiter – er steht bei der nächsten Rast wieder), die Tür „Zurück zur Lobby“ ruft `askToLobby`,
+  Verbindung mitten im Abstieg weg → Platz `rueckkehr-sekunden` frei (oben in der config.yml, Vorgabe 120, 0 = aus) und
+  `holdSlot(uuid, s)`. Die Gruppe spielt ohne die Person weiter (Türen und Räume warten nicht auf sie, Gegner lassen von
+  ihr ab; Kerkertaler, Einkäufe und Wiederbelebungen bleiben). Rechtzeitig zurück → `PlayerState` stellt Ort, Inventar,
+  Leben, Hunger und Effekte wieder her; ist die Gruppe inzwischen weiter, steht man am Eingang ihres Raums („Die Gruppe
+  ist schon weiter“), am Boden liegt man wieder, wer raus war, schaut wieder zu, hat die Gruppe inzwischen gerastet,
+  steht man wie alle; `holdSlot(uuid, 0)`. Sind alle weg (z. B. allein), hält der Abstieg an (`Run.pausedAt`: Gegner
+  ohne KI, Zeit für Bestzeit und Punkte steht). Zu spät → verlässt den Abstieg wie bisher (Niederlage), Hinweis beim
+  nächsten Betreten; Ende des Abstiegs → `holdSlot(uuid, 0)`. Älteres Netzwerk-Plugin (`LinkageError`) → einmal Hinweis
+  im Log, alles wie bisher. `/bvadmin geld <spieler> <betrag>` (Philip: Owner und Admins sollen sich zum Testen Geld
+  geben können): Kerkertaler für die Krämerin im laufenden Abstieg, zählt nicht als verdient, Recht
+  `moinmorni.burgverlies.admin`. `/bvadmin debug <spieler>` zeigt auch jemanden, dessen Platz frei ist, dazu `paused`,
+  `elapsed` und `away`. Test-Netzwerk schreibt `playing`, `ask-to-lobby` (fragt nur, solange „spielt“), `hold-slot` mit
+  und spielt mit `api=1` ein älteres Netzwerk-Plugin. Geprüft: 30 Unit-Tests (neu `SettingsTest`; JUnit 6.1.3, Issue #3), Paper 26.1 übersetzt,
+  echt mit Paper 26.1.2 (`test/run.sh`, `rueckkehr-sekunden: 12`): zufällige Etagen **125/125**, `SEED=8` **125/125**, Log
+  ohne Fehler – neu: „spielt“ im Abstieg und danach nicht mehr; Geld per Befehl (+50, Bestätigung, Spieler liest es,
+  ohne Recht nichts); Dora weg → Carl erfährt es, holdSlot 12, Carl spielt weiter und betritt ohne sie den nächsten
+  Raum; Dora zurück → im Raum der Gruppe, gleiche Ausrüstung, gleiches Leben (15), „Die Gruppe ist schon weiter“, Carl
+  liest „Dora ist wieder da“, holdSlot 0; zu lange weg → „nicht rechtzeitig zurückgekommen“, Niederlage in der
+  Statistik, holdSlot 12, 0, 12, 0, Hinweis im Torhaus; Carl allein weg → angehalten, Zeit steht (4 s Pause = 0,1 s),
+  zurück → läuft im selben Raum weiter; Tür → `askToLobby`, älteres Netzwerk-Plugin → wie bisher `toLobby`.
+- Version 0.1.3 (16.11. veröffentlicht, Release v0.1.3): **Name wieder MoinMorni** – 0.1.2 (16.11.
   veröffentlicht) hatte Burgverlies kurz an einen neuen Netzwerk-Namen angepasst; der war nicht verfügbar, darum ist
   der Code wieder wie in 0.1.1 (Umbenennung per `git revert` zurückgenommen): Paket `de.moinmorni.burgverlies`,
   Schnittstelle `de.moinmorni.api.MoinMorni`, Netzwerk-Plugin „MoinMorni“, Recht `moinmorni.burgverlies.admin`.
@@ -61,7 +85,9 @@ Schatz, Rast, Krämerin), ganz unten der Kerkermeister. Läuft im Netzwerk und a
 
 ## Offen
 
-- Philip: Bilder ansehen; Go für `main` (dann Release v0.1.3).
+- Philip: Go für `main` mit 0.1.4 (Zurück ins Spiel). Netzwerk-Repo: Einstellungs-Katalog um `rueckkehr-sekunden`
+  ergänzen (0–600, Vorgabe 120); Nachfrage vor der Lobby und „Zurück ins Spiel“ baut das Netzwerk-Plugin.
+- Nicht echt geprüft: Rückkehr mit echtem Client über das echte Netzwerk (Lobby-Angebot).
 - Nicht echt geprüft: richtiger Kampf mit echtem Client (Treffer, Schockwelle ausweichen per Sprung), Bedrock-Spieler,
   Netzwerk mit echtem Hub.
 - Einstellungen im Panel des Netzwerks (Einstellungs-Katalog) – gehört ins Netzwerk-Repo.

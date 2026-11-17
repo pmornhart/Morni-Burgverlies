@@ -21,7 +21,10 @@ import org.bukkit.entity.Player;
 final class Commands implements TabExecutor {
 
     private static final List<String> SUBS = List.of("start", "suchen", "verlassen", "stats", "top", "spuren");
-    private static final List<String> ADMIN = List.of("info", "neubauen", "neuladen", "debug", "loesen", "taler", "start");
+    private static final List<String> ADMIN = List.of("info", "neubauen", "neuladen", "debug", "loesen", "taler", "geld",
+            "start");
+    /** Höchstens so viel Geld auf einmal (zum Testen reicht das allemal). */
+    private static final int MAX_MONEY = 100_000;
 
     private final BurgverliesPlugin plugin;
 
@@ -174,6 +177,14 @@ final class Commands implements TabExecutor {
             case "debug", "loesen", "taler" -> {
                 Player target = args.length > 1 ? plugin.getServer().getPlayerExact(args[1])
                         : sender instanceof Player p ? p : null;
+                if (target == null && sub.equals("debug") && args.length > 1) {
+                    // Auch für jemanden, der gerade weg ist (Platz frei nach Verbindungsabbruch).
+                    org.bukkit.OfflinePlayer off = plugin.getServer().getOfflinePlayerIfCached(args[1]);
+                    if (off != null) {
+                        sender.sendMessage(Component.text(plugin.runs().debug(off.getUniqueId())));
+                        return true;
+                    }
+                }
                 if (target == null) {
                     sender.sendMessage(Texts.msg(lang, "admin.no-player"));
                     return true;
@@ -193,9 +204,35 @@ final class Commands implements TabExecutor {
                             : "admin.no-run", Placeholder.unparsed("n", String.valueOf(n))));
                 }
             }
+            case "geld", "money" -> money(sender, args, lang);
             default -> sender.sendMessage(Texts.msg(lang, "admin.usage"));
         }
         return true;
+    }
+
+    /** /bvadmin geld <spieler> <betrag>: Kerkertaler für die Krämerin im laufenden Abstieg – zum Testen (Owner/Admin). */
+    private void money(CommandSender sender, String[] args, String lang) {
+        int n;
+        try {
+            n = args.length > 2 ? Integer.parseInt(args[2]) : 0;
+        } catch (NumberFormatException e) {
+            n = 0;
+        }
+        if (args.length < 3 || n <= 0 || n > MAX_MONEY) {
+            sender.sendMessage(Texts.msg(lang, "admin.money.usage"));
+            return;
+        }
+        Player target = plugin.getServer().getPlayerExact(args[1]);
+        int total = target == null ? -1 : plugin.runs().giveMoney(target, n);
+        if (total < 0) {
+            sender.sendMessage(Texts.msg(lang, "admin.money.nobody", Placeholder.unparsed("name", args[1])));
+            return;
+        }
+        sender.sendMessage(Texts.msg(lang, "admin.money", Placeholder.unparsed("name", target.getName()),
+                Placeholder.unparsed("n", String.valueOf(n)), Placeholder.unparsed("total", String.valueOf(total))));
+        if (!target.equals(sender)) {
+            target.sendMessage(Texts.msg(plugin.lang(target), "money.got", Placeholder.unparsed("n", String.valueOf(n))));
+        }
     }
 
     @Override

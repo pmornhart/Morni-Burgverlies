@@ -45,6 +45,11 @@ allein.
   hält **3 Sekunden Schleichen** daneben → wieder auf den Beinen (kostet eine von **2 Wiederbelebungen**). Wer zu
   lange liegt (40/30/20 s je Schwierigkeit) oder keine Wiederbelebung mehr hat, ist raus und schaut zu – bis zur
   nächsten Rast oder Etage. Allein rappelt man sich selbst auf. Liegen alle, ist der Abstieg vorbei.
+- **Zurück ins Spiel:** Verbindung mitten im Abstieg weg (Spiel abgestürzt, Internet weg)? Der Platz bleibt 120
+  Sekunden frei (`rueckkehr-sekunden`), die Gruppe spielt weiter. Wer rechtzeitig zurückkommt, ist wieder bei der
+  Gruppe – im selben Raum wie sie (ist sie noch dort, genau an der alten Stelle), mit Ausrüstung, Leben und Tränken.
+  Sind alle weg (z. B. allein unterwegs), hält der Abstieg an: Gegner eingefroren, die Zeit steht. Wer nicht kommt,
+  verlässt den Abstieg wie bisher (zählt als Niederlage).
 - **Kerkertaler** gibt es für Gegner, Truhen und geschaffte Räume – nur für diesen Abstieg. Die Krämerin verkauft
   bessere Schwerter (Stein → Eisen → Diamant → Schärfe), Rüstung (Leder → Kette → Eisen → Diamant), Bogen (Stärke I/II),
   Schild, Pfeile, Heiltränke, Goldäpfel und Wiederbelebungen (höchstens zwei).
@@ -66,12 +71,18 @@ allein.
 | `/bv stats [spieler]` · `/bv top` · `/bv spuren` | Statistik, Bestenliste, Spuren |
 | `/bvadmin info\|neubauen\|neuladen` | Verwaltung (`moinmorni.burgverlies.admin`) |
 | `/bvadmin start <spieler> [schwierigkeit]` · `debug` · `loesen` · `taler` | für Team und Tests |
+| `/bvadmin geld <spieler> <betrag>` | Kerkertaler für die Krämerin im laufenden Abstieg dazugeben – zum Testen (`moinmorni.burgverlies.admin`, im Netzwerk Owner und Admin über „Spielmodi verwalten“) |
 
 ## Im Netzwerk
 
 Das Netzwerk-Plugin („MoinMorni“) stellt die Schnittstelle `de.moinmorni.api.MoinMorni` bereit; Burgverlies nutzt sie,
 wenn sie da ist (`softdepend`): Sprache, Party, Statistik, Zustand für Lobby-Figur und Webseite, zurück zur Lobby. Ohne
 Netzwerk: deutsche Texte, Statistik nur lokal, „zur Lobby“ trennt die Verbindung mit einem Hinweis.
+
+Ab Schnittstelle 2 meldet Burgverlies außerdem, wer gerade spielt (`playing`: vom Abstieg bis zum Ende oder Verlassen
+– auch, wer bis zur nächsten Rast raus ist, gehört noch dazu), hält nach einem Verbindungsabbruch den Platz frei
+(`holdSlot`: die Lobby bietet „Zurück ins Spiel“ an, `0` nimmt das Angebot zurück) und schickt mit der Tür im Torhaus
+über `askToLobby`. Ein älteres Netzwerk-Plugin kennt das nicht; dann läuft alles wie bisher.
 
 Statistik nach jedem Abstieg (`stats("burgverlies", …)`):
 
@@ -96,13 +107,13 @@ SEED=8 test/run.sh               # dasselbe mit festen Etagen (Siegelkammer, Bru
 `test/run.sh` baut das Plugin und ein Test-Netzwerk (`test/fake-network`: tut so, als wäre es das Netzwerk-Plugin –
 Bert spricht Englisch, Anna und Bert sind eine Party, alle Meldungen landen in `calls.log`), richtet einen
 Paper-26.1.2-Server mit ViaVersion/ViaBackwards ein (offline, Port 25780, RCON 25880) und schickt vier Test-Spieler
-durch alle drei Etagen bis zum Sieg über den Kerkermeister, dazu eine Niederlage allein und die Mitspieler-Suche
-(`test/burgverlies-test.cjs`). Test-Spieler können nicht richtig kämpfen: Gegner besiegt die Konsole, dem
+durch alle drei Etagen bis zum Sieg über den Kerkermeister, dazu eine Niederlage allein, die Mitspieler-Suche und
+Verbindungsabbrüche (rechtzeitig zurück zur Gruppe, zu lange weg, allein weg = Pause) (`test/burgverlies-test.cjs`). Test-Spieler können nicht richtig kämpfen: Gegner besiegt die Konsole, dem
 Kerkermeister schadet `damage` – geprüft wird, wie das Spiel darauf reagiert.
 
 ## Einstellungen
 
-`plugins/MorniBurgverlies/config.yml`: Welt, Abstiege gleichzeitig, Räume pro Etage, Wartezeit der Suche,
+`plugins/MorniBurgverlies/config.yml`: Rückkehr nach Verbindungsabbruch, Welt, Abstiege gleichzeitig, Räume pro Etage, Wartezeit der Suche,
 Wiederbelebungen (Anzahl, Schleich-Zeit, Ausbluten), Treppe, Ende, Wellen-Pause – mit Erklärungen in der Datei.
 Befehle zum Einstellen gibt es bewusst nicht: im Netzwerk stellt man alles im Panel ein.
 

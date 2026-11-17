@@ -69,8 +69,9 @@ enforce-whitelist=false
 motd=Morni Burgverlies Test
 allow-flight=true
 EOF
-# Testwerte: wenige Räume, kurze Suche, kurzes Ausbluten, kurze Wege.
+# Testwerte: wenige Räume, kurze Suche, kurzes Ausbluten, kurze Wege, Platz nach Verbindungsabbruch 12 Sekunden frei.
 cat > "$SERVER/plugins/MorniBurgverlies/config.yml" <<EOF2
+rueckkehr-sekunden: 12
 welt: burgverlies
 max-abstiege: 3
 raeume-pro-etage: 4

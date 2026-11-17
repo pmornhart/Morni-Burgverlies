@@ -14,9 +14,12 @@ public record Settings(
         int stairsSeconds,
         int endSeconds,
         int waveDelayTicks,
-        long seed) {
+        long seed,
+        int returnSeconds) {
 
     private static final int MAX_RUNS = 20;
+    /** Höchstens so lange bleibt ein Platz frei. */
+    private static final int MAX_RETURN_SECONDS = 600;
 
     static Settings load(FileConfiguration c) {
         return new Settings(
@@ -30,7 +33,8 @@ public record Settings(
                 clamp(c.getInt("treppe-sekunden", 3), 1, 30),
                 clamp(c.getInt("ende-sekunden", 8), 2, 60),
                 clamp(c.getInt("wellen-pause-ticks", 30), 10, 200),
-                c.getLong("startwert", 0));
+                c.getLong("startwert", 0),
+                clamp(c.getInt("rueckkehr-sekunden", 120), 0, MAX_RETURN_SECONDS));
     }
 
     private static int clamp(int v, int min, int max) {

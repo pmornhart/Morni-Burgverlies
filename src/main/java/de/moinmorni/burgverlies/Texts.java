@@ -153,6 +153,19 @@ public final class Texts {
                 "<gray>You're already on your way. <white>/verlassen</white> takes you back to the gatehouse.</gray>");
         t("run.left", "<gray><white><name></white> hat das Verlies verlassen.</gray>", "<gray><white><name></white> left the dungeon.</gray>");
         t("run.left.self", "<gray>Du bist zurück im Torhaus.</gray>", "<gray>You're back in the gatehouse.</gray>");
+        t("run.away", "<gray><white><name></white> hat die Verbindung verloren – der Platz bleibt <white><n></white> Sekunden frei, ihr spielt weiter.</gray>",
+                "<gray><white><name></white> lost the connection – their place stays free for <white><n></white> seconds, play on.</gray>");
+        t("run.away.gone", "<gray><white><name></white> ist nicht rechtzeitig zurückgekommen und hat das Verlies verlassen.</gray>",
+                "<gray><white><name></white> didn't make it back in time and left the dungeon.</gray>");
+        t("run.returned", "<gray><white><name></white> ist wieder da.</gray>", "<gray><white><name></white> is back.</gray>");
+        t("run.missed", "<gray>Willkommen zurück! Dein Abstieg ging ohne dich weiter.</gray>",
+                "<gray>Welcome back! Your descent went on without you.</gray>");
+        t("back.again.title", "<au>Willkommen zurück!</au>", "<au>Welcome back!</au>");
+        t("back.again.subtitle", "<gray>Dein Abstieg geht weiter.</gray>", "<gray>Your descent goes on.</gray>");
+        t("back.again", "<gray>Willkommen zurück! Du stehst wieder, wo du warst – mit Ausrüstung, Leben und Tränken.</gray>",
+                "<gray>Welcome back! You're right where you were – same gear, health and potions.</gray>");
+        t("back.again.moved", "<gray>Willkommen zurück! Die Gruppe ist schon weiter – du bist wieder bei ihr, mit Ausrüstung, Leben und Tränken.</gray>",
+                "<gray>Welcome back! Your group has moved on – you're with them again, same gear, health and potions.</gray>");
 
         t("floor.title", "<gl><b>Etage <n></b></gl>", "<gl><b>Floor <n></b></gl>");
         t("floor.0", "<gray>Kellergewölbe</gray>", "<gray>Cellar Vaults</gray>");
@@ -337,8 +350,8 @@ public final class Texts {
         t("trail.locked", "<dark_gray>Noch gesperrt</dark_gray>", "<dark_gray>Still locked</dark_gray>");
 
         // ---------- Verwaltung ----------
-        t("admin.usage", "<gray>/bvadmin info · neubauen · neuladen · debug [spieler] · loesen [spieler] · taler [spieler] [anzahl] · start [spieler] [schwierigkeit]</gray>",
-                "<gray>/bvadmin info · neubauen (rebuild) · neuladen (reload) · debug [player] · loesen (solve) [player] · taler [player] [amount] · start [player] [difficulty]</gray>");
+        t("admin.usage", "<gray>/bvadmin info · neubauen · neuladen · debug [spieler] · loesen [spieler] · taler [spieler] [anzahl] · geld \\<spieler> \\<betrag> · start [spieler] [schwierigkeit]</gray>",
+                "<gray>/bvadmin info · neubauen (rebuild) · neuladen (reload) · debug [player] · loesen (solve) [player] · taler [player] [amount] · geld (money) \\<player> \\<amount> · start [player] [difficulty]</gray>");
         t("admin.info", "<gray>Abstiege: <white><runs></white>/<white><max></white> · im Verlies: <white><inside></white> · suchen: <white><queued></white> · Netzwerk: <white><net></white></gray>",
                 "<gray>Runs: <white><runs></white>/<white><max></white> · in the dungeon: <white><inside></white> · searching: <white><queued></white> · network: <white><net></white></gray>");
         t("admin.rebuilt", "<em>Torhaus neu gebaut.</em>", "<em>Gatehouse rebuilt.</em>");
@@ -349,6 +362,14 @@ public final class Texts {
         t("admin.not-solved", "<gray>Gerade läuft kein Raum, der sich lösen lässt.</gray>", "<gray>No room that can be solved right now.</gray>");
         t("admin.started", "<gray><white><name></white> (und die Party) gehen hinab.</gray>", "<gray><white><name></white> (and their party) go down.</gray>");
         t("admin.taler", "<au>+<n> Kerkertaler.</au>", "<au>+<n> dungeon coins.</au>");
+        t("admin.money", "<em>✔</em> <white><name></white> <gray>bekommt</gray> <au><n> Kerkertaler</au><gray> für die Krämerin – jetzt</gray> <au><total></au><gray>.</gray>",
+                "<em>✔</em> <white><name></white> <gray>gets</gray> <au><n> dungeon coins</au><gray> for the trader – now</gray> <au><total></au><gray>.</gray>");
+        t("admin.money.usage", "<gray>So geht's: <white>/bvadmin geld \\<spieler> \\<betrag></white> – Kerkertaler im laufenden Abstieg (zum Testen).</gray>",
+                "<gray>Usage: <white>/bvadmin geld \\<player> \\<amount></white> – dungeon coins in the running descent (for testing).</gray>");
+        t("admin.money.nobody", "<gray><white><name></white> ist gerade in keinem Abstieg.</gray>",
+                "<gray><white><name></white> isn't in a descent right now.</gray>");
+        t("money.got", "<gray>Vom Team zum Testen:</gray> <au>+<n> Kerkertaler</au><gray> für die Krämerin.</gray>",
+                "<gray>From the team for testing:</gray> <au>+<n> dungeon coins</au><gray> for the trader.</gray>");
     }
 
     /** Alle Schlüssel (für Tests). */

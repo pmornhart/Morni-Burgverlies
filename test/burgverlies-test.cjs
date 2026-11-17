@@ -3,7 +3,8 @@
  *   node burgverlies-test.cjs <host> <port> <rcon-host:port> <rcon-passwort-datei> <server-ordner>
  *
  * Spieler: Anna (deutsch, Party-Leiterin mit Bert), Bert (englisch), Carl und Dora (deutsch, ohne Party). Sprache und
- * Party kommen vom Test-Netzwerk (test/fake-network), das auch Statistik und Zustand in calls.log mitschreibt.
+ * Party kommen vom Test-Netzwerk (test/fake-network), das auch Statistik, Zustand, „zur Lobby“, „spielt gerade“ und
+ * freie Plätze (Verbindung weg) in calls.log mitschreibt. Im Test bleibt ein Platz 12 Sekunden frei.
  *
  * Test-Spieler können nicht richtig kämpfen: Gegner werden per Konsole besiegt (`kill @e[tag=bv_mob]`), dem
  * Kerkermeister wird per `damage` geschadet. Geprüft wird, ob das Spiel darauf richtig reagiert (Wellen, Tore,
@@ -23,6 +24,7 @@ const PASS = fs.readFileSync(PASS_FILE, 'utf8').trim();
 const VERSION = process.env.MC_VERSION ?? '26.1';
 const HALL = { x: 0.5, y: 101, z: 9.5 };
 const END_MS = 4000; // ende-sekunden im Test
+const RETURN_S = 12; // rueckkehr-sekunden im Test
 
 const results = [];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -527,11 +529,26 @@ async function main() {
       && slot(anna, 8)?.name === 'arrow', [0, 1, 2, 8].map((i) => slot(anna, i)?.name).join(','));
   await sleep(300);
   check('Netzwerk: Zustand „running“', calls().some((c) => c.t === 'state' && c.state === 'running'));
+  check('Netzwerk: Anna und Bert „spielen gerade“', ['Anna', 'Bert'].every((n) =>
+    calls().some((c) => c.t === 'playing' && c.name === n && c.playing === true)));
   // Test-Spieler halten Treffer aus (Resistenz V) – Hinfallen prüft der Test mit „out_of_world“-Schaden, der durchgeht.
   await cmd('effect give Anna resistance 900 4 true', 'effect give Bert resistance 900 4 true');
   let d = await dbg('Anna');
   check('Abstieg „normal“, Etage 1, Ankunftsraum offen', d.difficulty === 'normal' && d.floor === 0
     && d.cur.type === 'START' && d.cur.gateOut === 'open', JSON.stringify(d.cur));
+  // Geld zum Testen (Owner/Admin über das Verwaltungsrecht): /bvadmin geld
+  const talerAnna = d.heroes.Anna.taler;
+  const talerBert = d.heroes.Bert.taler;
+  const [money] = await cmd('bvadmin geld Anna 50');
+  d = await dbg('Anna');
+  check('/bvadmin geld Anna 50: +50 Kerkertaler im laufenden Abstieg, mit Bestätigung',
+    d.heroes.Anna.taler === talerAnna + 50 && /Anna bekommt 50 Kerkertaler für die Krämerin – jetzt \d+/.test(money.replace(/§./g, '')),
+    `${talerAnna} → ${d.heroes.Anna.taler}: ${money.replace(/§./g, '')}`);
+  check('Anna liest „Vom Team zum Testen: +50 Kerkertaler“', await waitFor(() => sees(anna, /Vom Team zum Testen: \+50 Kerkertaler/), 3000),
+    anna.chats.slice(-2).join(' | '));
+  bert.chat('/bvadmin geld Bert 100');
+  await sleep(800);
+  check('Ohne Verwaltungsrecht (Bert) gibt es kein Geld', (await dbg('Anna')).heroes.Bert.taler === talerBert);
 
   // ------------------------------------------------------------------ Drei Etagen
   const bots = [anna, bert];
@@ -579,6 +596,8 @@ async function main() {
   check('Netzwerk-Statistik: Bestzeit (kleiner ist besser)', main0 && main0.best.best_time_ms > 0, JSON.stringify(main0?.best));
   check('Netzwerk-Statistik: beste Punkte', stats.some((c) => c.best.best_score > 0 && c.lower === false));
   check('Statistik auch für Bert', calls().some((c) => c.t === 'stats' && c.name === 'Bert' && c.add.wins === 1));
+  const lastPlaying = (n) => calls().filter((c) => c.t === 'playing' && c.name === n).slice(-1)[0]?.playing;
+  check('Netzwerk: nach dem Abstieg „spielt“ niemand mehr', lastPlaying('Anna') === false && lastPlaying('Bert') === false);
   const file = readFile(playerFile('Anna'));
   check('Spielerdatei: 1 Abstieg, 1 Sieg, Bestzeit normal', /abstiege: 1/.test(file) && /siege: 1/.test(file)
     && /bestzeit-normal: [1-9]/.test(file), file.split('\n').slice(0, 6).join(' '));
@@ -634,7 +653,93 @@ async function main() {
   const [info] = await cmd('bvadmin info');
   check('Alle draußen → Verlies wieder frei', /Abstiege: 0/.test(info.replace(/§./g, '')), info.replace(/§./g, ''));
 
-  for (const b of [anna, bert, carl, dora]) b.quit();
+  // ------------------------------------------------------------------ Zurück ins Spiel (Verbindung weg)
+  const mark = calls().length;
+  const since = () => calls().slice(mark);
+  const holds = (n) => since().filter((c) => c.t === 'hold-slot' && c.name === n).map((c) => c.seconds).join(',');
+  clear(carl, dora);
+  carl.chat('/bv suchen leicht');
+  await sleep(800);
+  dora.chat('/bv suchen leicht');
+  check('Rückkehr: Carl und Dora zusammen im Abstieg', await waitFor(() => inDungeon(carl) && inDungeon(dora), 25000));
+  await cmd('effect give Carl resistance 900 4 true', 'effect give Dora resistance 900 4 true');
+  await cmd('damage Dora 5 minecraft:out_of_world');
+  await waitFor(() => dora.health <= 15.5, 3000);
+  const hpBefore = dora.health;
+  const gearBefore = [0, 1, 2, 8].map((i) => slot(dora, i)?.name).join(',');
+  let rc = await dbg('Carl');
+  const roomBefore = rc.room;
+  clear(carl);
+  dora.quit();
+  check(`Dora weg: Carl erfährt es (Platz ${RETURN_S} s frei, ihr spielt weiter)`, await waitFor(() =>
+    sees(carl, new RegExp(`Dora hat die Verbindung verloren – der Platz bleibt ${RETURN_S} Sekunden frei, ihr spielt weiter`)), 4000),
+  carl.chats.join(' | '));
+  check(`Netzwerk: Platz für Dora frei (holdSlot ${RETURN_S})`, holds('Dora') === String(RETURN_S), holds('Dora'));
+  rc = await dbg('Carl');
+  check('Dora bleibt im Abstieg (Platz frei), Carl spielt weiter (nicht angehalten)',
+    rc.heroes.Dora && !rc.heroes.Dora.left && rc.heroes.Dora.away && !rc.paused, JSON.stringify(rc.heroes.Dora));
+  const next = rc.next;
+  if (next) await tp('Carl', next.entry);
+  check('Die Gruppe geht weiter: Carl betritt ohne Dora den nächsten Raum', next &&
+    (await waitFor(async () => (await dbg('Carl')).room === next.i, 6000)), JSON.stringify(next));
+  let dora2 = await join('Dora');
+  rc = await dbg('Carl');
+  check('Dora ist rechtzeitig zurück: bei der Gruppe, im selben Raum wie Carl', inDungeon(dora2) && rc.room !== roomBefore &&
+    near(dora2.entity.position, new Vec3(...rc.cur.entry), 3), `${JSON.stringify(dora2.entity.position)} / ${JSON.stringify(rc.cur.entry)}`);
+  check('Dora hat ihre Ausrüstung und ihr Leben', [0, 1, 2, 8].map((i) => slot(dora2, i)?.name).join(',') === gearBefore &&
+    Math.abs(dora2.health - hpBefore) < 1, `${gearBefore} → ${[0, 1, 2, 8].map((i) => slot(dora2, i)?.name).join(',')}, ${hpBefore} → ${dora2.health}`);
+  check('Dora: „Die Gruppe ist schon weiter“', await waitFor(() => sees(dora2, /Die Gruppe ist schon weiter/), 3000),
+    dora2.chats.join(' | '));
+  check('Carl: „Dora ist wieder da“', await waitFor(() => sees(carl, /Dora ist wieder da/), 3000), carl.chats.join(' | '));
+  check('Netzwerk: Platz wieder zu (0), Dora „spielt“ wieder', holds('Dora') === `${RETURN_S},0` &&
+    since().filter((c) => c.t === 'playing' && c.name === 'Dora').slice(-1)[0]?.playing === true, holds('Dora'));
+  rc = await dbg('Carl');
+  check('Dora wieder dabei (nicht weg, steht)', !rc.heroes.Dora.away && rc.heroes.Dora.state === 'UP', JSON.stringify(rc.heroes.Dora));
+  // Zu lange weg: wie bisher – Dora verlässt den Abstieg
+  clear(carl);
+  dora2.quit();
+  check('Dora wieder weg: Carl erfährt es', await waitFor(() => sees(carl, /Dora hat die Verbindung verloren/), 4000));
+  check(`Zu lange weg (über ${RETURN_S} s): Dora hat das Verlies verlassen`, await waitFor(() =>
+    sees(carl, /Dora ist nicht rechtzeitig zurückgekommen und hat das Verlies verlassen/), RETURN_S * 1000 + 6000), carl.chats.join(' | '));
+  rc = await dbg('Carl');
+  check('Dora ist raus, ihr Abstieg zählt als Niederlage', rc.heroes.Dora.left &&
+    since().some((c) => c.t === 'stats' && c.name === 'Dora' && c.add.runs === 1 && c.add.wins === 0), JSON.stringify(rc.heroes.Dora));
+  check(`Netzwerk: holdSlot für Dora ${RETURN_S}, 0, ${RETURN_S}, 0`, holds('Dora') === `${RETURN_S},0,${RETURN_S},0`, holds('Dora'));
+  dora2 = await join('Dora');
+  check('Dora kommt zu spät: im Torhaus mit Hinweis', inHall(dora2) && (await waitFor(() =>
+    sees(dora2, /Dein Abstieg ging ohne dich weiter/), 3000)), dora2.chats.join(' | '));
+  // Allein unterwegs und weg: der Abstieg hält an, bis Carl zurück ist
+  const solo = await dbg('Carl');
+  carl.quit();
+  await sleep(4000);
+  let dp = await dbg('Carl');
+  check('Carl allein weg: Abstieg angehalten, die Zeit steht', dp.paused === true && dp.elapsed - solo.elapsed < 1500,
+    `paused ${dp.paused}, ${solo.elapsed} → ${dp.elapsed} ms`);
+  const carl2 = await join('Carl');
+  await sleep(1200);
+  dp = await dbg('Carl');
+  check('Carl zurück: der Abstieg läuft weiter, im selben Raum', !dp.paused && inDungeon(carl2) && dp.room === solo.room &&
+    dp.elapsed - solo.elapsed < 4000, `paused ${dp.paused}, Raum ${solo.room} → ${dp.room}, ${solo.elapsed} → ${dp.elapsed} ms`);
+  carl2.chat('/verlassen');
+  check('/verlassen nach der Rückkehr: zurück im Torhaus', await waitFor(() => inHall(carl2), 5000));
+
+  // ------------------------------------------------------------------ „Zurück zur Lobby“ (Tür im Torhaus)
+  await sleep(500);
+  anna.setQuickBarSlot(8);
+  await sleep(300);
+  anna.activateItem();
+  check('Tür „Zurück zur Lobby“ → askToLobby, Anna spielt nicht → gleich in die Lobby',
+    await waitFor(() => since().some((c) => c.t === 'ask-to-lobby' && c.name === 'Anna' && c.playing === false), 4000) &&
+      !since().some((c) => c.t === 'to-lobby' && c.name === 'Anna'));
+  // Älteres Netzwerk-Plugin (ohne Methoden ab Version 2): wie bisher sofort über toLobby
+  fs.appendFileSync(path.join(SERVER, 'plugins/MoinMorni/fake.properties'), 'api=1\n');
+  bert.setQuickBarSlot(8);
+  await sleep(300);
+  bert.activateItem();
+  check('Älteres Netzwerk-Plugin: Tür schickt wie bisher sofort in die Lobby (toLobby)', await waitFor(() =>
+    since().some((c) => c.t === 'old-api' && c.method === 'askToLobby') && since().some((c) => c.t === 'to-lobby' && c.name === 'Bert'), 4000));
+
+  for (const b of [carl2, dora2]) b.quit();
   await sleep(500);
   const failed = results.filter((r) => !r.ok);
   console.log(`\n${results.length - failed.length}/${results.length} Prüfungen bestanden`);

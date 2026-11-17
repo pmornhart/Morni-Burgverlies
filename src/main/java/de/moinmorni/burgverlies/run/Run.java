@@ -33,6 +33,14 @@ public final class Run {
     int roomsCleared;
     boolean bossKilled;
     final List<UUID> entities = new ArrayList<>();
+    /** Verbindung weg: Platz frei bis …, Stand beim Gehen, wo die Gruppe da war (Etage, Raum), stand man nicht? */
+    final Map<UUID, Away> away = new LinkedHashMap<>();
+    /** Alle weg: seit wann angehalten (0 = läuft), welche Gegner dafür eingefroren wurden. */
+    long pausedAt;
+    final List<UUID> frozen = new ArrayList<>();
+
+    record Away(long until, PlayerState state, int floor, int room, boolean down) {
+    }
 
     Run(int id, int slot, long seed, Difficulty difficulty, String lang, Map<UUID, String> players, int revives,
             int bleedSteps, int reviveSteps) {
@@ -69,6 +77,11 @@ public final class Run {
         return heroes.get(u);
     }
 
+    /** Hat die Verbindung verloren und darf noch zurückkommen? */
+    public boolean away(UUID u) {
+        return away.containsKey(u);
+    }
+
     /** Alle, die noch dabei sind. */
     public List<Hero> active() {
         return heroes.values().stream().filter(h -> !h.left()).toList();
@@ -87,7 +100,9 @@ public final class Run {
         return rooms[floor].get(current);
     }
 
+    /** Gespielte Zeit (ohne Pausen, in denen alle weg waren). */
     long elapsed() {
-        return startMs == 0 ? 0 : System.currentTimeMillis() - startMs;
+        long now = pausedAt > 0 ? pausedAt : System.currentTimeMillis();
+        return startMs == 0 ? 0 : now - startMs;
     }
 }
